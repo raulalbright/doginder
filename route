@@ -1,0 +1,278 @@
+import { NextRequest, NextResponse } from 'next/server';
+
+interface Message {
+  id: string;
+  chatId: string;
+  text?: string;
+  image?: string;
+  sender: string;
+  timestamp: string;
+  senderName: string;
+}
+
+interface SendMessageRequest {
+  chatId: string;
+  message?: string;
+  image?: string;
+  sender: string;
+}
+
+// In-memory storage for demo purposes
+// In a real app, this would be a database
+const messages: Map<string, Message[]> = new Map();
+
+// Initialize with some mock data
+const initializeMockData = () => {
+  if (messages.size === 0) {
+    // Mock messages for chat ID "1"
+    const mockMessages: Message[] = [
+      {
+        id: '1',
+        chatId: '1',
+        text: `Hi! I saw your pet's profile and they look adorable! 🐕`,
+        sender: 'other',
+        timestamp: new Date(Date.now() - 3600000).toISOString(),
+        senderName: 'Sarah'
+      },
+      {
+        id: '2',
+        chatId: '1',
+        text: `Thank you! Your pet is so cute too! Would love to arrange a playdate sometime.`,
+        sender: 'user',
+        timestamp: new Date(Date.now() - 3000000).toISOString(),
+        senderName: 'CurrentUser'
+      }
+    ];
+    
+    messages.set('1', mockMessages);
+  }
+};
+
+export async function GET(request: NextRequest) {
+  try {
+    initializeMockData();
+    
+    const { searchParams } = new URL(request.url);
+    const chatId = searchParams.get('chatId');
+    const limit = parseInt(searchParams.get('limit') || '50');
+    const offset = parseInt(searchParams.get('offset') || '0');
+
+    if (!chatId) {
+      return NextResponse.json(
+        { error: 'Chat ID is required' },
+        { status: 400 }
+      );
+    }
+
+    const chatMessages = messages.get(chatId) || [];
+    
+    // Apply pagination
+    const paginatedMessages = chatMessages
+      .slice(offset, offset + limit)
+      .sort((a, b) => new Date(a.timestamp).getTime() - new Date(b.timestamp).getTime());
+
+    return NextResponse.json({
+      success: true,
+      messages: paginatedMessages,
+      total: chatMessages.length,
+      hasMore: offset + limit < chatMessages.length
+    });
+
+  } catch (error) {
+    console.error('Messages GET API error:', error);
+    return NextResponse.json(
+      { error: 'Internal server error' },
+      { status: 500 }
+    );
+  }
+}
+
+export async function POST(request: NextRequest) {
+  try {
+    initializeMockData();
+    
+    const body: SendMessageRequest = await request.json();
+    
+    // Validate required fields
+    if (!body.chatId || !body.sender) {
+      return NextResponse.json(
+        { error: 'Chat ID and sender are required' },
+        { status: 400 }
+      );
+    }
+
+    if (!body.message && !body.image) {
+      return NextResponse.json(
+        { error: 'Either message text or image is required' },
+        { status: 400 }
+      );
+    }
+
+    // Validate image data if provided
+    if (body.image && !body.image.startsWith('data:image/')) {
+      return NextResponse.json(
+        { error: 'Invalid image format' },
+        { status: 400 }
+      );
+    }
+
+    // Create new message
+    const newMessage: Message = {
+      id: Date.now().toString(),
+      chatId: body.chatId,
+      text: body.message,
+      image: body.image,
+      sender: body.sender,
+      timestamp: new Date().toISOString(),
+      senderName: body.sender
+    };
+
+    // Get existing messages for this chat
+    const chatMessages = messages.get(body.chatId) || [];
+    
+    // Add new message
+    chatMessages.push(newMessage);
+    messages.set(body.chatId, chatMessages);
+
+    return NextResponse.json({
+      success: true,
+      message: newMessage,
+      totalMessages: chatMessages.length
+    }, { status: 201 });
+
+  } catch (error) {
+    console.error('Messages POST API error:', error);
+    return NextResponse.json(
+      { error: 'Internal server error' },
+      { status: 500 }
+    );
+  }
+}
+
+export async function DELETE(request: NextRequest) {
+  try {
+    const { searchParams } = new URL(request.url);
+    const chatId = searchParams.get('chatId');
+    const messageId = searchParams.get('messageId');
+    const action = searchParams.get('action');
+
+    if (action === 'clear') {
+      if (chatId) {
+        // Clear messages for specific chat
+        messages.delete(chatId);
+        return NextResponse.json({
+          success: true,
+          message: `Messages cleared for chat ${chatId}`
+        });
+      } else {
+        // Clear all messages
+        messages.clear();
+        return NextResponse.json({
+          success: true,
+          message: 'All messages cleared'
+        });
+      }
+    }
+
+    if (!chatId || !messageId) {
+      return NextResponse.json(
+        { error: 'Chat ID and message ID are required' },
+        { status: 400 }
+      );
+    }
+
+    const chatMessages = messages.get(chatId);
+    if (!chatMessages) {
+      return NextResponse.json(
+        { error: 'Chat not found' },
+        { status: 404 }
+      );
+    }
+
+    // Find and remove the message
+    const messageIndex = chatMessages.findIndex(msg => msg.id === messageId);
+    if (messageIndex === -1) {
+      return NextResponse.json(
+        { error: 'Message not found' },
+        { status: 404 }
+      );
+    }
+
+    const deletedMessage = chatMessages.splice(messageIndex, 1)[0];
+    messages.set(chatId, chatMessages);
+
+    return NextResponse.json({
+      success: true,
+      deletedMessage,
+      remainingMessages: chatMessages.length
+    });
+
+  } catch (error) {
+    console.error('Messages DELETE API error:', error);
+    return NextResponse.json(
+      { error: 'Internal server error' },
+      { status: 500 }
+    );
+  }
+}
+
+// PUT method for updating messages (e.g., editing)
+export async function PUT(request: NextRequest) {
+  try {
+    const body = await request.json();
+    const { chatId, messageId, text, image } = body;
+
+    if (!chatId || !messageId) {
+      return NextResponse.json(
+        { error: 'Chat ID and message ID are required' },
+        { status: 400 }
+      );
+    }
+
+    if (!text && !image) {
+      return NextResponse.json(
+        { error: 'Either text or image is required' },
+        { status: 400 }
+      );
+    }
+
+    const chatMessages = messages.get(chatId);
+    if (!chatMessages) {
+      return NextResponse.json(
+        { error: 'Chat not found' },
+        { status: 404 }
+      );
+    }
+
+    const messageIndex = chatMessages.findIndex(msg => msg.id === messageId);
+    if (messageIndex === -1) {
+      return NextResponse.json(
+        { error: 'Message not found' },
+        { status: 404 }
+      );
+    }
+
+    // Update the message
+    const updatedMessage = {
+      ...chatMessages[messageIndex],
+      text,
+      image,
+      timestamp: new Date().toISOString() // Update timestamp to show it was edited
+    };
+
+    chatMessages[messageIndex] = updatedMessage;
+    messages.set(chatId, chatMessages);
+
+    return NextResponse.json({
+      success: true,
+      message: updatedMessage
+    });
+
+  } catch (error) {
+    console.error('Messages PUT API error:', error);
+    return NextResponse.json(
+      { error: 'Internal server error' },
+      { status: 500 }
+    );
+  }
+}
