@@ -1,0 +1,294 @@
+"use client";
+
+import React, { createContext, useContext, useState, useEffect } from 'react';
+
+type Language = 'en' | 'es';
+
+interface Translations {
+  // Navigation
+  swipe: string;
+  chat: string;
+  logout: string;
+  profile: string;
+  
+  // Landing Page
+  findPetMatch: string;
+  perfectMatch: string;
+  connectFurryFriends: string;
+  getStarted: string;
+  signIn: string;
+  
+  // Authentication
+  welcomeBack: string;
+  signInToFind: string;
+  username: string;
+  email: string;
+  password: string;
+  enterUsername: string;
+  enterEmail: string;
+  enterPassword: string;
+  dontHaveAccount: string;
+  signUpHere: string;
+  alreadyHaveAccount: string;
+  signInHere: string;
+  
+  // Registration
+  joinPetTinder: string;
+  createProfileForPet: string;
+  petPhoto: string;
+  chooseFile: string;
+  petName: string;
+  petAge: string;
+  breed: string;
+  gender: string;
+  location: string;
+  hobbies: string;
+  ageInYears: string;
+  selectGender: string;
+  cityState: string;
+  hobbiesCommaSeparated: string;
+  createProfile: string;
+  male: string;
+  female: string;
+  
+  // Swipe Page
+  petTinder: string;
+  welcome: string;
+  owner: string;
+  pass: string;
+  like: string;
+  
+  // Chat
+  yourMatches: string;
+  noMatchesYet: string;
+  keepSwiping: string;
+  startSwiping: string;
+  loadingMessages: string;
+  typeMessage: string;
+  
+  // Match Notification
+  itsAMatch: string;
+  youAndOwnerLiked: string;
+  startChatting: string;
+  
+  // Validation Messages
+  usernameRequired: string;
+  emailRequired: string;
+  passwordRequired: string;
+  validEmailRequired: string;
+  passwordMinLength: string;
+  petNameRequired: string;
+  petAgeRequired: string;
+  validAgeRequired: string;
+  breedRequired: string;
+  locationRequired: string;
+  genderRequired: string;
+}
+
+const translations: Record<Language, Translations> = {
+  en: {
+    // Navigation
+    swipe: 'Swipe',
+    chat: 'Chat',
+    logout: 'Logout',
+    profile: 'Profile',
+    
+    // Landing Page
+    findPetMatch: "Find Your Pet's",
+    perfectMatch: 'Perfect Match',
+    connectFurryFriends: 'Connect your furry friends with their ideal playmates. Swipe, match, and arrange playdates in your area.',
+    getStarted: 'Get Started',
+    signIn: 'Sign In',
+    
+    // Authentication
+    welcomeBack: 'Welcome Back',
+    signInToFind: "Sign in to find your pet's perfect match",
+    username: 'Username',
+    email: 'Email',
+    password: 'Password',
+    enterUsername: 'Enter your username',
+    enterEmail: 'Enter your email',
+    enterPassword: 'Enter your password',
+    dontHaveAccount: "Don't have an account?",
+    signUpHere: 'Sign up here',
+    alreadyHaveAccount: 'Already have an account?',
+    signInHere: 'Sign in here',
+    
+    // Registration
+    joinPetTinder: 'Join Pet Tinder',
+    createProfileForPet: 'Create a profile for your furry friend',
+    petPhoto: 'Pet Photo',
+    chooseFile: 'Choose File',
+    petName: 'Pet Name',
+    petAge: 'Pet Age',
+    breed: 'Breed',
+    gender: 'Gender',
+    location: 'Location',
+    hobbies: 'Hobbies (comma-separated)',
+    ageInYears: 'Age in years',
+    selectGender: 'Select gender',
+    cityState: 'City, State',
+    hobbiesCommaSeparated: 'Playing fetch, sleeping, treats, walks',
+    createProfile: 'Create Profile',
+    male: 'Male',
+    female: 'Female',
+    
+    // Swipe Page
+    petTinder: 'Pet Tinder',
+    welcome: 'Welcome',
+    owner: 'Owner',
+    pass: 'Pass',
+    like: 'Like',
+    
+    // Chat
+    yourMatches: 'Your Matches',
+    noMatchesYet: 'No matches yet',
+    keepSwiping: 'Keep swiping to find your pet\'s perfect match!',
+    startSwiping: 'Start Swiping',
+    loadingMessages: 'Loading messages...',
+    typeMessage: 'Type a message...',
+    
+    // Match Notification
+    itsAMatch: "It's a Match!",
+    youAndOwnerLiked: 'You and {owner} liked each other\'s pets!',
+    startChatting: 'Start Chatting',
+    
+    // Validation Messages
+    usernameRequired: 'Username is required',
+    emailRequired: 'Email is required',
+    passwordRequired: 'Password is required',
+    validEmailRequired: 'Please enter a valid email address',
+    passwordMinLength: 'Password must be at least 6 characters',
+    petNameRequired: 'Pet name is required',
+    petAgeRequired: 'Pet age is required',
+    validAgeRequired: 'Please enter a valid age',
+    breedRequired: 'Pet breed is required',
+    locationRequired: 'Location is required',
+    genderRequired: 'Pet gender is required',
+  },
+  es: {
+    // Navigation
+    swipe: 'Deslizar',
+    chat: 'Chat',
+    logout: 'Cerrar Sesión',
+    profile: 'Perfil',
+    
+    // Landing Page
+    findPetMatch: 'Encuentra la',
+    perfectMatch: 'Pareja Perfecta para tu Mascota',
+    connectFurryFriends: 'Conecta a tus amigos peludos con sus compañeros de juego ideales. Desliza, haz match y organiza citas de juego en tu área.',
+    getStarted: 'Comenzar',
+    signIn: 'Iniciar Sesión',
+    
+    // Authentication
+    welcomeBack: 'Bienvenido de Vuelta',
+    signInToFind: 'Inicia sesión para encontrar la pareja perfecta de tu mascota',
+    username: 'Nombre de Usuario',
+    email: 'Correo Electrónico',
+    password: 'Contraseña',
+    enterUsername: 'Ingresa tu nombre de usuario',
+    enterEmail: 'Ingresa tu correo electrónico',
+    enterPassword: 'Ingresa tu contraseña',
+    dontHaveAccount: '¿No tienes una cuenta?',
+    signUpHere: 'Regístrate aquí',
+    alreadyHaveAccount: '¿Ya tienes una cuenta?',
+    signInHere: 'Inicia sesión aquí',
+    
+    // Registration
+    joinPetTinder: 'Únete a Pet Tinder',
+    createProfileForPet: 'Crea un perfil para tu amigo peludo',
+    petPhoto: 'Foto de Mascota',
+    chooseFile: 'Elegir Archivo',
+    petName: 'Nombre de Mascota',
+    petAge: 'Edad de Mascota',
+    breed: 'Raza',
+    gender: 'Género',
+    location: 'Ubicación',
+    hobbies: 'Pasatiempos (separados por comas)',
+    ageInYears: 'Edad en años',
+    selectGender: 'Seleccionar género',
+    cityState: 'Ciudad, Estado',
+    hobbiesCommaSeparated: 'Jugar a buscar, dormir, premios, paseos',
+    createProfile: 'Crear Perfil',
+    male: 'Macho',
+    female: 'Hembra',
+    
+    // Swipe Page
+    petTinder: 'Pet Tinder',
+    welcome: 'Bienvenido',
+    owner: 'Dueño',
+    pass: 'Pasar',
+    like: 'Me Gusta',
+    
+    // Chat
+    yourMatches: 'Tus Matches',
+    noMatchesYet: 'Aún no hay matches',
+    keepSwiping: '¡Sigue deslizando para encontrar la pareja perfecta de tu mascota!',
+    startSwiping: 'Comenzar a Deslizar',
+    loadingMessages: 'Cargando mensajes...',
+    typeMessage: 'Escribe un mensaje...',
+    
+    // Match Notification
+    itsAMatch: '¡Es un Match!',
+    youAndOwnerLiked: '¡Tú y {owner} se gustaron las mascotas!',
+    startChatting: 'Comenzar a Chatear',
+    
+    // Validation Messages
+    usernameRequired: 'El nombre de usuario es requerido',
+    emailRequired: 'El correo electrónico es requerido',
+    passwordRequired: 'La contraseña es requerida',
+    validEmailRequired: 'Por favor ingresa un correo electrónico válido',
+    passwordMinLength: 'La contraseña debe tener al menos 6 caracteres',
+    petNameRequired: 'El nombre de la mascota es requerido',
+    petAgeRequired: 'La edad de la mascota es requerida',
+    validAgeRequired: 'Por favor ingresa una edad válida',
+    breedRequired: 'La raza de la mascota es requerida',
+    locationRequired: 'La ubicación es requerida',
+    genderRequired: 'El género de la mascota es requerido',
+  }
+};
+
+interface LanguageContextType {
+  language: Language;
+  setLanguage: (lang: Language) => void;
+  t: Translations;
+}
+
+const LanguageContext = createContext<LanguageContextType | undefined>(undefined);
+
+export const useLanguage = () => {
+  const context = useContext(LanguageContext);
+  if (context === undefined) {
+    throw new Error('useLanguage must be used within a LanguageProvider');
+  }
+  return context;
+};
+
+export const LanguageProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
+  const [language, setLanguage] = useState<Language>('en');
+
+  useEffect(() => {
+    // Check for stored language preference
+    const storedLanguage = localStorage.getItem('petTinderLanguage') as Language;
+    if (storedLanguage && (storedLanguage === 'en' || storedLanguage === 'es')) {
+      setLanguage(storedLanguage);
+    }
+  }, []);
+
+  const handleSetLanguage = (lang: Language) => {
+    setLanguage(lang);
+    localStorage.setItem('petTinderLanguage', lang);
+  };
+
+  const value: LanguageContextType = {
+    language,
+    setLanguage: handleSetLanguage,
+    t: translations[language],
+  };
+
+  return (
+    <LanguageContext.Provider value={value}>
+      {children}
+    </LanguageContext.Provider>
+  );
+};
