@@ -1,0 +1,117 @@
+"use client";
+
+import React, { createContext, useContext, useState, useEffect } from 'react';
+
+interface User {
+  id: string;
+  username: string;
+  email: string;
+  petImage?: string;
+  petName?: string;
+  petAge?: number;
+  petBreed?: string;
+  petLocation?: string;
+  petGender?: string;
+  petHobbies?: string[];
+}
+
+interface AuthContextType {
+  user: User | null;
+  login: (userData: Omit<User, 'id'> & { password: string; action?: 'login' | 'register' }) => Promise<void>;
+  logout: () => void;
+  isLoading: boolean;
+  error: string | null;
+}
+
+const AuthContext = createContext<AuthContextType | undefined>(undefined);
+
+export const useAuth = () => {
+  const context = useContext(AuthContext);
+  if (context === undefined) {
+    throw new Error('useAuth must be used within an AuthProvider');
+  }
+  return context;
+};
+
+export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
+  const [user, setUser] = useState<User | null>(null);
+  const [isLoading, setIsLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+
+  useEffect(() => {
+    // Check for stored user data on mount
+    const storedUser = localStorage.getItem('petTinderUser');
+    if (storedUser) {
+      try {
+        setUser(JSON.parse(storedUser));
+      } catch (err) {
+        console.error('Error parsing stored user data:', err);
+        localStorage.removeItem('petTinderUser');
+      }
+    }
+    setIsLoading(false);
+  }, []);
+
+  const login = async (userData: Omit<User, 'id'> & { password: string; action?: 'login' | 'register' }) => {
+    setIsLoading(true);
+    setError(null);
+    
+    try {
+      // Simulate API call
+      const response = await fetch('/api/auth', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(userData),
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.error || 'Authentication failed');
+      }
+
+      const result = await response.json();
+      const newUser: User = {
+        id: result.user.id,
+        username: result.user.username,
+        email: result.user.email,
+        petImage: result.user.petImage,
+        petName: result.user.petName,
+        petAge: result.user.petAge,
+        petBreed: result.user.petBreed,
+        petLocation: result.user.petLocation,
+        petGender: result.user.petGender,
+        petHobbies: result.user.petHobbies,
+      };
+
+      setUser(newUser);
+      localStorage.setItem('petTinderUser', JSON.stringify(newUser));
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Login failed');
+      throw err;
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const logout = () => {
+    setUser(null);
+    setError(null);
+    localStorage.removeItem('petTinderUser');
+  };
+
+  const value: AuthContextType = {
+    user,
+    login,
+    logout,
+    isLoading,
+    error,
+  };
+
+  return (
+    <AuthContext.Provider value={value}>
+      {children}
+    </AuthContext.Provider>
+  );
+};
