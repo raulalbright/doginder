@@ -1,0 +1,164 @@
+"use client";
+
+import React, { useEffect } from 'react';
+import { useAuth } from '@/context/AuthContext';
+import { useRouter } from 'next/navigation';
+import { Button } from '@/components/ui/button';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+
+export default function HomePage() {
+  const { user, isLoading } = useAuth();
+  const router = useRouter();
+
+  useEffect(() => {
+    if (!isLoading && user) {
+      // If user is logged in, redirect to swipe page
+      router.push('/swipe');
+    }
+  }, [user, isLoading, router]);
+
+  if (isLoading) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-pink-50 to-purple-50">
+        <div className="text-center">
+          <div className="w-8 h-8 border-4 border-pink-600 border-t-transparent rounded-full animate-spin mx-auto mb-4"></div>
+          <p className="text-gray-600">Loading...</p>
+        </div>
+      </div>
+    );
+  }
+
+  if (user) {
+    return null; // Will redirect to /swipe
+  }
+
+  return (
+    <div className="min-h-screen bg-gradient-to-br from-pink-50 to-purple-50">
+      {/* Hero Section */}
+      <div className="relative overflow-hidden">
+        <div className="max-w-7xl mx-auto">
+          <div className="relative z-10 pb-8 bg-gradient-to-br from-pink-50 to-purple-50 sm:pb-16 md:pb-20 lg:max-w-2xl lg:w-full lg:pb-28 xl:pb-32">
+            <main className="mt-10 mx-auto max-w-7xl px-4 sm:mt-12 sm:px-6 md:mt-16 lg:mt-20 lg:px-8 xl:mt-28">
+              <div className="sm:text-center lg:text-left">
+                <h1 className="text-4xl tracking-tight font-extrabold text-gray-900 sm:text-5xl md:text-6xl">
+                  <span className="block xl:inline">Find Your Pet's</span>{' '}
+                  <span className="block text-pink-600 xl:inline">Perfect Match</span>
+                </h1>
+                <p className="mt-3 text-base text-gray-500 sm:mt-5 sm:text-lg sm:max-w-xl sm:mx-auto md:mt-5 md:text-xl lg:mx-0">
+                  Connect your furry friends with their ideal playmates. Swipe, match, and arrange playdates in your area.
+                </p>
+                <div className="mt-5 sm:mt-8 sm:flex sm:justify-center lg:justify-start">
+                  <div className="rounded-md shadow">
+                    <Button
+                      onClick={() => router.push('/register')}
+                      className="w-full flex items-center justify-center px-8 py-3 text-base font-medium bg-pink-600 hover:bg-pink-700 md:py-4 md:text-lg md:px-10"
+                    >
+                      Get Started
+                    </Button>
+                  </div>
+                  <div className="mt-3 sm:mt-0 sm:ml-3">
+                    <Button
+                      variant="outline"
+                      onClick={() => router.push('/login')}
+                      className="w-full flex items-center justify-center px-8 py-3 text-base font-medium border-pink-600 text-pink-600 hover:bg-pink-50 md:py-4 md:text-lg md:px-10"
+                    >
+                      Sign In
+                    </Button>
+                  </div>
+                </div>
+              </div>
+            </main>
+          </div>
+        </div>
+        <div className="lg:absolute lg:inset-y-0 lg:right-0 lg:w-1/2">
+          <img
+            className="h-56 w-full object-cover sm:h-72 md:h-96 lg:w-full lg:h-full"
+            src="https://storage.googleapis.com/workspace-0f70711f-8b4e-4d94-86f1-2a93ccde5887/image/fa4b1f9a-41ac-4fc1-bbff-10dd6d1808a8.png"
+            alt="Happy pets playing together"
+            onError={(e) => {
+              const target = e.target as HTMLImageElement;
+              target.src = `https://storage.googleapis.com/workspace-0f70711f-8b4e-4d94-86f1-2a93ccde5887/image/fe79c09a-3fb8-44f0-ba39-a59a9c622a70.png`;
+            }}
+          />
+        </div>
+      </div>
+
+      {/* Features Section */}
+      <div className="py-12 bg-white">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="lg:text-center">
+            <h2 className="text-base text-pink-600 font-semibold tracking-wide uppercase">Features</h2>
+            <p className="mt-2 text-3xl leading-8 font-extrabold tracking-tight text-gray-900 sm:text-4xl">
+              Everything your pet needs to socialize
+            </p>
+            <p className="mt-4 max-w-2xl text-xl text-gray-500 lg:mx-auto">
+              Our app makes it easy for pets to find compatible friends in their area.
+            </p>
+          </div>
+
+          <div className="mt-10">
+            <div className="space-y-10 md:space-y-0 md:grid md:grid-cols-2 md:gap-x-8 md:gap-y-10">
+              <div className="relative">
+                <div className="absolute flex items-center justify-center h-12 w-12 rounded-md bg-pink-500 text-white">
+                  <span className="text-2xl">🐾</span>
+                </div>
+                <p className="ml-16 text-lg leading-6 font-medium text-gray-900">Smart Matching</p>
+                <p className="mt-2 ml-16 text-base text-gray-500">
+                  Our algorithm matches pets based on breed, age, location, and personality traits.
+                </p>
+              </div>
+
+              <div className="relative">
+                <div className="absolute flex items-center justify-center h-12 w-12 rounded-md bg-pink-500 text-white">
+                  <span className="text-2xl">💬</span>
+                </div>
+                <p className="ml-16 text-lg leading-6 font-medium text-gray-900">Chat & Share</p>
+                <p className="mt-2 ml-16 text-base text-gray-500">
+                  Connect with other pet owners through our built-in messaging system with photo sharing.
+                </p>
+              </div>
+
+              <div className="relative">
+                <div className="absolute flex items-center justify-center h-12 w-12 rounded-md bg-pink-500 text-white">
+                  <span className="text-2xl">📍</span>
+                </div>
+                <p className="ml-16 text-lg leading-6 font-medium text-gray-900">Local Connections</p>
+                <p className="mt-2 ml-16 text-base text-gray-500">
+                  Find pets in your neighborhood for easy meetups and playdates.
+                </p>
+              </div>
+
+              <div className="relative">
+                <div className="absolute flex items-center justify-center h-12 w-12 rounded-md bg-pink-500 text-white">
+                  <span className="text-2xl">🎯</span>
+                </div>
+                <p className="ml-16 text-lg leading-6 font-medium text-gray-900">Easy Swiping</p>
+                <p className="mt-2 ml-16 text-base text-gray-500">
+                  Simple swipe interface to quickly browse through potential pet friends.
+                </p>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      {/* CTA Section */}
+      <div className="bg-pink-600">
+        <div className="max-w-2xl mx-auto text-center py-16 px-4 sm:py-20 sm:px-6 lg:px-8">
+          <h2 className="text-3xl font-extrabold text-white sm:text-4xl">
+            <span className="block">Ready to find your pet's best friend?</span>
+          </h2>
+          <p className="mt-4 text-lg leading-6 text-pink-200">
+            Join thousands of pet owners who have already found amazing playmates for their furry friends.
+          </p>
+          <Button
+            onClick={() => router.push('/register')}
+            className="mt-8 w-full inline-flex items-center justify-center px-5 py-3 border border-transparent text-base font-medium rounded-md text-pink-600 bg-white hover:bg-pink-50 sm:w-auto"
+          >
+            Start Matching Today
+          </Button>
+        </div>
+      </div>
+    </div>
+  );
+}
