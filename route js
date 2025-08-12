@@ -1,0 +1,199 @@
+import { NextRequest, NextResponse } from 'next/server';
+
+interface AuthRequest {
+  username: string;
+  email: string;
+  password: string;
+  petName?: string;
+  petAge?: number;
+  petBreed?: string;
+  petLocation?: string;
+  petGender?: string;
+  petHobbies?: string[];
+  petImage?: string;
+  action?: 'login' | 'register';
+}
+
+// In-memory storage for demo purposes
+// In a real app, this would be a database
+const users: Map<string, any> = new Map();
+
+export async function POST(request: NextRequest) {
+  try {
+    const body: AuthRequest = await request.json();
+    
+    // Validate required fields
+    if (!body.username || !body.email || !body.password) {
+      return NextResponse.json(
+        { error: 'Username, email, and password are required' },
+        { status: 400 }
+      );
+    }
+
+    // Validate password strength
+    if (body.password.length < 6) {
+      return NextResponse.json(
+        { error: 'Password must be at least 6 characters long' },
+        { status: 400 }
+      );
+    }
+
+    // Validate email format
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (!emailRegex.test(body.email)) {
+      return NextResponse.json(
+        { error: 'Invalid email format' },
+        { status: 400 }
+      );
+    }
+
+    // Check if user already exists
+    const existingUser = Array.from(users.values()).find(
+      user => user.email === body.email || user.username === body.username
+    );
+
+    // Handle login request
+    if (body.action === 'login' || (!body.petName && !body.petAge)) {
+      if (!existingUser) {
+        return NextResponse.json(
+          { error: 'User not found. Please register first.' },
+          { status: 404 }
+        );
+      }
+
+      // Verify password
+      if (existingUser.password !== body.password) {
+        return NextResponse.json(
+          { error: 'Invalid password' },
+          { status: 401 }
+        );
+      }
+
+      // Generate a simple token (in a real app, use JWT)
+      const token = `token_${existingUser.id}_${Date.now()}`;
+
+      return NextResponse.json({
+        success: true,
+        user: existingUser,
+        token,
+        message: 'Login successful'
+      }, { status: 200 });
+    }
+
+    // Handle registration request
+    if (existingUser) {
+      return NextResponse.json(
+        { error: 'User with this email or username already exists' },
+        { status: 409 }
+      );
+    }
+
+    // Create new user
+    const userId = Date.now().toString();
+    const newUser = {
+      id: userId,
+      username: body.username,
+      email: body.email,
+      password: body.password, // In a real app, hash this password
+      petName: body.petName,
+      petAge: body.petAge,
+      petBreed: body.petBreed,
+      petLocation: body.petLocation,
+      petGender: body.petGender,
+      petHobbies: body.petHobbies || [],
+      petImage: body.petImage,
+      createdAt: new Date().toISOString(),
+    };
+
+    // Store user
+    users.set(userId, newUser);
+
+    // Generate a simple token (in a real app, use JWT)
+    const token = `token_${userId}_${Date.now()}`;
+
+    return NextResponse.json({
+      success: true,
+      user: newUser,
+      token,
+      message: 'User registered successfully'
+    }, { status: 201 });
+
+  } catch (error) {
+    console.error('Auth API error:', error);
+    return NextResponse.json(
+      { error: 'Internal server error' },
+      { status: 500 }
+    );
+  }
+}
+
+export async function GET(request: NextRequest) {
+  try {
+    const { searchParams } = new URL(request.url);
+    const userId = searchParams.get('userId');
+    const token = searchParams.get('token');
+
+    if (!userId || !token) {
+      return NextResponse.json(
+        { error: 'User ID and token are required' },
+        { status: 400 }
+      );
+    }
+
+    // Validate token (simple validation for demo)
+    if (!token.startsWith(`token_${userId}_`)) {
+      return NextResponse.json(
+        { error: 'Invalid token' },
+        { status: 401 }
+      );
+    }
+
+    const user = users.get(userId);
+    if (!user) {
+      return NextResponse.json(
+        { error: 'User not found' },
+        { status: 404 }
+      );
+    }
+
+    return NextResponse.json({
+      success: true,
+      user
+    });
+
+  } catch (error) {
+    console.error('Auth GET API error:', error);
+    return NextResponse.json(
+      { error: 'Internal server error' },
+      { status: 500 }
+    );
+  }
+}
+
+// For debugging purposes - get all users (remove in production)
+export async function DELETE(request: NextRequest) {
+  try {
+    const { searchParams } = new URL(request.url);
+    const action = searchParams.get('action');
+
+    if (action === 'clear') {
+      users.clear();
+      return NextResponse.json({
+        success: true,
+        message: 'All users cleared'
+      });
+    }
+
+    return NextResponse.json(
+      { error: 'Invalid action' },
+      { status: 400 }
+    );
+
+  } catch (error) {
+    console.error('Auth DELETE API error:', error);
+    return NextResponse.json(
+      { error: 'Internal server error' },
+      { status: 500 }
+    );
+  }
+}
